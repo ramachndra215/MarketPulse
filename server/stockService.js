@@ -91,7 +91,7 @@ async function fetchFromIndianApi(stock, exchange, apiKey, baseUrl) {
       'x-api-key': apiKey,
       'Accept': 'application/json',
     },
-    timeout: 8000,
+    timeout: 15000,
   });
 
   const d = response.data;
@@ -158,7 +158,7 @@ async function fetchFromLivePublicApi(stock, exchange) {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'application/json',
     },
-    timeout: 8000,
+    timeout: 15000,
   });
 
   const chart = response.data?.chart?.result?.[0];
