@@ -449,7 +449,7 @@ app.use((req, res) => {
 });
 
 // Start Express server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(` MarketPulse Server running on http://localhost:${PORT}`);
   console.log(` API Base URL: ${API_BASE_URL}`);
@@ -463,6 +463,34 @@ app.listen(PORT, () => {
   console.log(`   - GET /api/stocks?exchange=ALL|NSE|BSE`);
   console.log(`   - GET /api/stocks/most-active?exchange=NSE|BSE`);
   console.log(`   - GET /api/stocks/trending`);
+  console.log(`   - GET /api/stocks/details/:symbol`);
+  console.log(`   - GET /api/stocks/history/:symbol?period=1m|6m|1yr|3yr|5yr|max`);
+  console.log(`   - GET /api/stocks/ai-analysis/:symbol`);
+  console.log(`   - GET /api/stocks/ai-suggestions/:symbol`);
+  console.log(`   - GET /api/stocks/compare?symbols=...`);
+  console.log(`   - GET /api/news`);
+  console.log(`   - POST /api/auth/register`);
+  console.log(`   - POST /api/auth/login`);
+  console.log(`   - GET /api/user/profile`);
+  console.log(`   - GET /api/user/watchlist`);
+  console.log(`   - POST /api/user/watchlist`);
+  console.log(`   - GET /api/user/portfolio`);
+  console.log(`   - POST /api/user/portfolio`);
+  console.log(`   - DELETE /api/user/portfolio/:id`);
+  console.log(`====================================================`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ Error: Port ${PORT} is already in use by another running process.`);
+    console.error(`👉 To free port ${PORT} in PowerShell, run:`);
+    console.error(`   Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force\n`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', err);
+    process.exit(1);
+  }
+});
   console.log(`   - GET /api/stocks/details/:symbol`);
   console.log(`   - GET /api/stocks/history/:symbol?period=1m`);
   console.log(`   - GET /api/stocks/ai-analysis/:symbol`);
