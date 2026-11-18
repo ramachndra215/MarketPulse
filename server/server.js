@@ -3,7 +3,30 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getWatchlistStocks, getSingleStock, WATCHLIST } from './stockService.js';
+import {
+  getWatchlistStocks,
+  getSingleStock,
+  getMostActiveStocks,
+  getTrendingStocks,
+  getCompanyFullDetails,
+  getHistoricalChartData,
+  getMarketNews,
+  generateAiAnalysis,
+  getAiStockSuggestions,
+  MASTER_STOCKS,
+  WATCHLIST,
+} from './stockService.js';
+import {
+  registerUser,
+  loginUser,
+  getUserByToken,
+  getUserWatchlist,
+  addToWatchlist,
+  removeFromWatchlist,
+  getUserPortfolio,
+  addPortfolioItem,
+  removePortfolioItem,
+} from './userService.js';
 
 // Resolve directory paths in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -18,11 +41,11 @@ const API_BASE_URL = process.env.API_BASE_URL || 'https://stock.indianapi.in';
 const INDIAN_API_KEY = process.env.INDIAN_API_KEY || '';
 const ENABLE_PUBLIC_FALLBACK = process.env.ENABLE_PUBLIC_FALLBACK !== 'false';
 
-// Enable CORS for frontend Vite dev server and production origins
+// Enable CORS
 app.use(
   cors({
     origin: '*',
-    methods: ['GET', 'OPTIONS'],
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   })
 );
@@ -36,8 +59,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Helper auth middleware
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    // Provide fallback guest user so dashboard remains immediately usable
+    req.user = { id: 'guest_user', name: 'MarketPulse Guest', email: 'guest@marketpulse.in' };
+    return next();
+  }
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  const user = getUserByToken(token);
+  if (!user) {
+    req.user = { id: 'guest_user', name: 'MarketPulse Guest', email: 'guest@marketpulse.in' };
+  } else {
+    req.user = user;
+  }
+  next();
+}
+
 /**
- * Health check & configuration status endpoint
+ * Health check & configuration status
  */
 app.get('/api/health', (req, res) => {
   const isKeyConfigured = Boolean(
@@ -48,8 +89,8 @@ app.get('/api/health', (req, res) => {
 
   res.json({
     status: 'ok',
-    service: 'MarketPulse API Server',
-    version: '1.0.0',
+    service: 'MarketPulse Indian Stock Market Intelligence Server',
+    version: '2.0.0',
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
     configuration: {
@@ -58,26 +99,27 @@ app.get('/api/health', (req, res) => {
       isApiKeyConfigured: isKeyConfigured,
       fallbackEnabled: ENABLE_PUBLIC_FALLBACK,
     },
-    supportedExchanges: ['NSE', 'BSE'],
-    watchlistCount: WATCHLIST.length,
+    supportedExchanges: ['ALL', 'NSE', 'BSE'],
+    universeCount: MASTER_STOCKS.length,
   });
 });
 
 /**
- * Main stocks endpoint: returns watchlist stock prices for requested exchange
+ * Main stocks endpoint: returns watchlist / master stocks
  * Query params:
- *   - exchange: 'NSE' | 'BSE' (default: 'NSE')
- *   - refresh: 'true' | 'false' (skip cache)
+ *   - exchange: 'ALL' | 'NSE' | 'BSE' (default: 'ALL')
+ *   - sector: string (e.g. 'Banking', 'Information Technology')
+ *   - search: string (company name, symbol, or BSE scrip code)
+ *   - refresh: 'true' | 'false'
  */
 app.get('/api/stocks', async (req, res) => {
   try {
-    const rawExchange = (req.query.exchange || 'NSE').toString().toUpperCase();
+    const rawExchange = (req.query.exchange || 'ALL').toString().toUpperCase();
 
-    // Input validation
-    if (rawExchange !== 'NSE' && rawExchange !== 'BSE') {
+    if (rawExchange !== 'NSE' && rawExchange !== 'BSE' && rawExchange !== 'ALL') {
       return res.status(400).json({
         success: false,
-        error: `Invalid exchange: '${rawExchange}'. Supported exchanges are 'NSE' and 'BSE'.`,
+        error: `Invalid exchange: '${rawExchange}'. Supported exchanges are 'ALL', 'NSE', and 'BSE'.`,
       });
     }
 
@@ -102,38 +144,223 @@ app.get('/api/stocks', async (req, res) => {
 });
 
 /**
- * Single stock endpoint
+ * Most active stocks on BSE or NSE (Documented /BSE_most_active, /NSE_most_active)
+ */
+app.get('/api/stocks/most-active', async (req, res) => {
+  try {
+    const exchange = (req.query.exchange || 'NSE').toString().toUpperCase();
+    const data = await getMostActiveStocks(exchange, {
+      apiKey: INDIAN_API_KEY,
+      baseUrl: API_BASE_URL,
+    });
+    res.json({
+      success: true,
+      exchange,
+      total: data.length,
+      data,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to fetch most active stocks',
+    });
+  }
+});
+
+/**
+ * Trending stocks: Top Gainers and Top Losers (/trending)
+ */
+app.get('/api/stocks/trending', async (req, res) => {
+  try {
+    const data = await getTrendingStocks({
+      apiKey: INDIAN_API_KEY,
+      baseUrl: API_BASE_URL,
+    });
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to fetch trending stocks',
+    });
+  }
+});
+
+/**
+ * Comprehensive company details (fundamentals, financials, balance sheet, shareholding)
+ */
+app.get('/api/stocks/details/:symbol', async (req, res) => {
+  try {
+    const symbolParam = req.params.symbol.trim();
+    const details = await getCompanyFullDetails(symbolParam, {
+      apiKey: INDIAN_API_KEY,
+      baseUrl: API_BASE_URL,
+    });
+    res.json({
+      success: true,
+      data: details,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to fetch company details',
+    });
+  }
+});
+
+/**
+ * Historical stock chart data (/historical_data)
+ * Periods: 1D, 5D, 1M, 6M, 1Y, 3Y, 5Y, MAX
+ */
+app.get('/api/stocks/history/:symbol', async (req, res) => {
+  try {
+    const symbolParam = req.params.symbol.trim();
+    const period = (req.query.period || '1M').toString();
+    const chartData = await getHistoricalChartData(symbolParam, period, {
+      apiKey: INDIAN_API_KEY,
+      baseUrl: API_BASE_URL,
+    });
+    res.json({
+      success: true,
+      data: chartData,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to fetch historical chart data',
+    });
+  }
+});
+
+/**
+ * Live Market News (/news)
+ */
+app.get('/api/news', async (req, res) => {
+  try {
+    const news = await getMarketNews({
+      apiKey: INDIAN_API_KEY,
+      baseUrl: API_BASE_URL,
+    });
+    res.json({
+      success: true,
+      total: news.length,
+      data: news,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to fetch market news',
+    });
+  }
+});
+
+/**
+ * AI Stock Intelligence Analysis
+ */
+app.get('/api/stocks/ai-analysis/:symbol', async (req, res) => {
+  try {
+    const symbolParam = req.params.symbol.trim();
+    const details = await getCompanyFullDetails(symbolParam, {
+      apiKey: INDIAN_API_KEY,
+      baseUrl: API_BASE_URL,
+    });
+    const analysis = generateAiAnalysis(details);
+    res.json({
+      success: true,
+      data: analysis,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to generate AI stock analysis',
+    });
+  }
+});
+
+/**
+ * AI Stock Suggestions (Related peers in same sector)
+ */
+app.get('/api/stocks/ai-suggestions/:symbol', async (req, res) => {
+  try {
+    const symbolParam = req.params.symbol.toUpperCase().trim();
+    const sectorParam = req.query.sector || '';
+    const suggestions = getAiStockSuggestions(symbolParam, sectorParam);
+    res.json({
+      success: true,
+      data: suggestions,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to retrieve AI suggestions',
+    });
+  }
+});
+
+/**
+ * Multi-Stock Comparison
+ */
+app.get('/api/stocks/compare', async (req, res) => {
+  try {
+    const rawSymbols = (req.query.symbols || 'TCS,INFY').toString();
+    const symbols = rawSymbols.split(',').map((s) => s.trim().toUpperCase());
+
+    const detailsList = await Promise.allSettled(
+      symbols.map((sym) =>
+        getCompanyFullDetails(sym, {
+          apiKey: INDIAN_API_KEY,
+          baseUrl: API_BASE_URL,
+        })
+      )
+    );
+
+    const successful = detailsList
+      .filter((r) => r.status === 'fulfilled')
+      .map((r) => r.value);
+
+    res.json({
+      success: true,
+      count: successful.length,
+      data: successful,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to compare stocks',
+    });
+  }
+});
+
+/**
+ * Single stock endpoint (Preserved for compatibility)
  */
 app.get('/api/stocks/:symbol', async (req, res) => {
   try {
     const symbolParam = (req.params.symbol || '').toUpperCase().trim();
     const rawExchange = (req.query.exchange || 'NSE').toString().toUpperCase();
 
-    if (rawExchange !== 'NSE' && rawExchange !== 'BSE') {
-      return res.status(400).json({
-        success: false,
-        error: `Invalid exchange: '${rawExchange}'. Supported exchanges are 'NSE' and 'BSE'.`,
-      });
-    }
-
-    const matchedStock = WATCHLIST.find(
-      (s) => s.symbol === symbolParam || s.nseSymbol === symbolParam || s.apiName.toUpperCase() === symbolParam
+    const matchedStock = MASTER_STOCKS.find(
+      (s) =>
+        s.symbol === symbolParam ||
+        s.nseSymbol === symbolParam ||
+        s.bseSymbol === symbolParam ||
+        s.apiName.toUpperCase() === symbolParam
     );
 
     if (!matchedStock) {
       return res.status(404).json({
         success: false,
-        error: `Stock '${symbolParam}' not found in watchlist. Available: ${WATCHLIST.map((s) => s.symbol).join(', ')}`,
+        error: `Stock '${symbolParam}' not found in universe.`,
       });
     }
 
-    const skipCache = req.query.refresh === 'true';
-
-    const data = await getSingleStock(matchedStock, rawExchange, {
+    const data = await getSingleStock(matchedStock, rawExchange === 'BSE' ? 'BSE' : 'NSE', {
       apiKey: INDIAN_API_KEY,
       baseUrl: API_BASE_URL,
       enableFallback: ENABLE_PUBLIC_FALLBACK,
-      skipCache,
     });
 
     return res.json({
@@ -142,7 +369,6 @@ app.get('/api/stocks/:symbol', async (req, res) => {
       data,
     });
   } catch (error) {
-    console.error(`[API Error /api/stocks/${req.params.symbol}]:`, error.message);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch single stock details',
@@ -150,11 +376,75 @@ app.get('/api/stocks/:symbol', async (req, res) => {
   }
 });
 
-// Fallback 404 handler for unknown routes
+// ============================================================================
+// User Authentication & Portfolio Routes
+// ============================================================================
+
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const user = registerUser(req.body);
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const user = loginUser(req.body);
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(401).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+// Watchlist endpoints
+app.get('/api/user/watchlist', authMiddleware, (req, res) => {
+  const watchlist = getUserWatchlist(req.user.id);
+  res.json({ success: true, watchlist });
+});
+
+app.post('/api/user/watchlist', authMiddleware, (req, res) => {
+  const { symbol } = req.body;
+  if (!symbol) return res.status(400).json({ error: 'Symbol is required' });
+  const updated = addToWatchlist(req.user.id, symbol);
+  res.json({ success: true, watchlist: updated });
+});
+
+app.delete('/api/user/watchlist/:symbol', authMiddleware, (req, res) => {
+  const updated = removeFromWatchlist(req.user.id, req.params.symbol);
+  res.json({ success: true, watchlist: updated });
+});
+
+// Portfolio endpoints
+app.get('/api/user/portfolio', authMiddleware, (req, res) => {
+  const portfolio = getUserPortfolio(req.user.id);
+  res.json({ success: true, portfolio });
+});
+
+app.post('/api/user/portfolio', authMiddleware, (req, res) => {
+  const item = req.body;
+  if (!item.symbol || !item.quantity || !item.buyPrice) {
+    return res.status(400).json({ error: 'Symbol, quantity, and buyPrice are required.' });
+  }
+  const updated = addPortfolioItem(req.user.id, item);
+  res.json({ success: true, portfolio: updated });
+});
+
+app.delete('/api/user/portfolio/:id', authMiddleware, (req, res) => {
+  const updated = removePortfolioItem(req.user.id, req.params.id);
+  res.json({ success: true, portfolio: updated });
+});
+
+// Fallback 404 handler
 app.use((req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
-    availableEndpoints: ['/api/stocks', '/api/stocks/:symbol', '/api/health'],
+    service: 'MarketPulse API Server',
   });
 });
 
@@ -168,9 +458,15 @@ app.listen(PORT, () => {
       INDIAN_API_KEY ? 'Configured (Active)' : 'Not set (Using Live Fallback)'
     }`
   );
-  console.log(` Endpoints:`);
-  console.log(`   - GET http://localhost:${PORT}/api/health`);
-  console.log(`   - GET http://localhost:${PORT}/api/stocks?exchange=NSE`);
-  console.log(`   - GET http://localhost:${PORT}/api/stocks?exchange=BSE`);
+  console.log(` Available Endpoints:`);
+  console.log(`   - GET /api/health`);
+  console.log(`   - GET /api/stocks?exchange=ALL|NSE|BSE`);
+  console.log(`   - GET /api/stocks/most-active?exchange=NSE|BSE`);
+  console.log(`   - GET /api/stocks/trending`);
+  console.log(`   - GET /api/stocks/details/:symbol`);
+  console.log(`   - GET /api/stocks/history/:symbol?period=1m`);
+  console.log(`   - GET /api/stocks/ai-analysis/:symbol`);
+  console.log(`   - GET /api/news`);
+  console.log(`   - POST /api/auth/register, /api/auth/login`);
   console.log(`====================================================`);
 });

@@ -1,9 +1,6 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus, Building2, Calendar, ShieldCheck } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Calendar, Star, PlusCircle, ArrowUpRight } from 'lucide-react';
 
-/**
- * Format currency into Indian Rupees (INR)
- */
 function formatINR(val) {
   if (val === null || val === undefined || isNaN(val)) return 'N/A';
   return new Intl.NumberFormat('en-IN', {
@@ -14,23 +11,25 @@ function formatINR(val) {
   }).format(val);
 }
 
-/**
- * Format relative change
- */
 function formatChange(val) {
   if (val === null || val === undefined || isNaN(val)) return '0.00';
   const prefix = val > 0 ? '+' : '';
-  return `${prefix}${val.toFixed(2)}`;
+  return `${prefix}${Number(val).toFixed(2)}`;
 }
 
-export default function StockCard({ stock }) {
+export default function StockCard({
+  stock,
+  onSelectStock,
+  onAddToWatchlist,
+  isInWatchlist,
+  onAddToPortfolio,
+}) {
   const isPositive = stock.percentChange > 0;
   const isNegative = stock.percentChange < 0;
   const isNeutral = stock.percentChange === 0 || stock.percentChange === null;
-
   const movementClass = isPositive ? 'pos' : isNegative ? 'neg' : 'neu';
 
-  // 52-week range calculation percentage
+  // 52-week range percentage
   let rangePercent = 50;
   if (
     stock.yearHigh !== null &&
@@ -44,7 +43,6 @@ export default function StockCard({ stock }) {
     );
   }
 
-  // Format updated time
   const updatedDate = stock.lastUpdated ? new Date(stock.lastUpdated) : null;
   const formattedTime = updatedDate
     ? updatedDate.toLocaleTimeString('en-IN', {
@@ -59,24 +57,46 @@ export default function StockCard({ stock }) {
     <div className={`stock-card ${movementClass}`}>
       {/* Top Card Header */}
       <div className="card-top">
-        <div className="card-identity">
+        <div className="card-identity cursor-pointer" onClick={() => onSelectStock(stock)}>
           <div className="card-title-row">
             <h3 className="stock-symbol mono-number">{stock.symbol}</h3>
-            <span className={`exchange-badge badge-${stock.exchange?.toLowerCase()}`}>
-              {stock.exchange || 'NSE'}
+            <span className="exchange-badge badge-nse">
+              NSE: {stock.nseSymbol || stock.symbol}
             </span>
+            {stock.bseSymbol && (
+              <span className="exchange-badge badge-bse">
+                BSE: {stock.bseSymbol}
+              </span>
+            )}
           </div>
           <h4 className="stock-company-name" title={stock.companyName}>
             {stock.companyName}
           </h4>
         </div>
 
-        {/* Movement Icon Indicator */}
-        <div className={`movement-pill ${movementClass}`}>
-          {isPositive && <TrendingUp size={16} />}
-          {isNegative && <TrendingDown size={16} />}
-          {isNeutral && <Minus size={16} />}
-          <span className="mono-number">{formatChange(stock.percentChange)}%</span>
+        {/* Movement Badge & Quick Watchlist Star */}
+        <div className="card-actions-top">
+          <button
+            type="button"
+            className={`btn-star-card ${isInWatchlist ? 'active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToWatchlist(stock.symbol);
+            }}
+            title={isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+          >
+            <Star
+              size={15}
+              fill={isInWatchlist ? '#eab308' : 'none'}
+              color={isInWatchlist ? '#eab308' : '#94a3b8'}
+            />
+          </button>
+          <div className={`movement-pill ${movementClass}`}>
+            {isPositive && <TrendingUp size={15} />}
+            {isNegative && <TrendingDown size={15} />}
+            {isNeutral && <Minus size={15} />}
+            <span className="mono-number">{formatChange(stock.percentChange)}%</span>
+          </div>
         </div>
       </div>
 
@@ -84,11 +104,15 @@ export default function StockCard({ stock }) {
       {stock.sector && (
         <div className="card-sector-row">
           <span className="card-sector-badge">{stock.sector}</span>
+          {stock.industry && <span className="card-industry-tag">{stock.industry}</span>}
         </div>
       )}
 
       {/* Main Price Row */}
-      <div className="card-price-section">
+      <div
+        className="card-price-section cursor-pointer"
+        onClick={() => onSelectStock(stock)}
+      >
         <div className="current-price mono-number">
           {stock.price !== null ? formatINR(stock.price) : 'Price Unavailable'}
         </div>
@@ -98,7 +122,7 @@ export default function StockCard({ stock }) {
         </div>
       </div>
 
-      {/* 52-Week High/Low Range */}
+      {/* 52-Week High/Low Range Track */}
       <div className="range-container">
         <div className="range-labels">
           <span className="range-label">
@@ -110,16 +134,12 @@ export default function StockCard({ stock }) {
           </span>
         </div>
         <div className="range-track">
-          <div
-            className="range-fill"
-            style={{ width: `${rangePercent}%` }}
-            title={`Current: ${rangePercent.toFixed(1)}% of 52-week range`}
-          ></div>
+          <div className="range-fill" style={{ width: `${rangePercent}%` }}></div>
           <div className="range-indicator" style={{ left: `${rangePercent}%` }}></div>
         </div>
       </div>
 
-      {/* Additional Stats Row */}
+      {/* Day Stats Row */}
       <div className="card-stats-grid">
         <div className="stat-item">
           <span className="stat-label">Day High</span>
@@ -147,13 +167,19 @@ export default function StockCard({ stock }) {
         </div>
       </div>
 
-      {/* Card Footer: Last Updated & Provider */}
+      {/* Card Footer: Detailed view trigger & timestamp */}
       <div className="card-footer">
         <span className="update-time">
-          <Calendar size={12} />
-          Updated {formattedTime}
+          <Calendar size={12} /> {formattedTime}
         </span>
-        <span className="source-tag">{stock.dataSource || 'Live Feed'}</span>
+        <button
+          type="button"
+          className="btn-card-details"
+          onClick={() => onSelectStock(stock)}
+        >
+          <span>Deep Intelligence</span>
+          <ArrowUpRight size={13} />
+        </button>
       </div>
     </div>
   );

@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Clock, ShieldCheck, TrendingUp, Building } from 'lucide-react';
+import {
+  Activity,
+  Clock,
+  ShieldCheck,
+  TrendingUp,
+  RefreshCw,
+  User,
+  LogIn,
+} from 'lucide-react';
 
 export default function Header({
   selectedExchange,
   onSelectExchange,
   isKeyConfigured,
   providerName,
+  user,
+  onOpenAuth,
+  onRefresh,
+  refreshing,
 }) {
   const [istTime, setIstTime] = useState('');
   const [marketStatus, setMarketStatus] = useState({
@@ -28,7 +40,6 @@ export default function Header({
       const minutes = istDate.getMinutes();
       const currentTimeInMinutes = hours * 60 + minutes;
 
-      // Format IST Time string
       const timeStr = istDate.toLocaleTimeString('en-IN', {
         hour: '2-digit',
         minute: '2-digit',
@@ -37,7 +48,6 @@ export default function Header({
       });
       setIstTime(timeStr);
 
-      // Check trading hours
       if (day === 0 || day === 6) {
         setMarketStatus({
           status: 'WEEKEND',
@@ -54,7 +64,7 @@ export default function Header({
           colorClass: 'status-pre',
         });
       } else if (currentTimeInMinutes >= 555 && currentTimeInMinutes <= 930) {
-        // 09:15 to 15:30 (930 minutes)
+        // 09:15 to 15:30
         setMarketStatus({
           status: 'OPEN',
           label: 'Market Open (Live)',
@@ -79,7 +89,7 @@ export default function Header({
   return (
     <header className="header-container">
       <div className="header-inner">
-        {/* Logo and Brand */}
+        {/* Brand Group */}
         <div className="brand-group">
           <div className="brand-logo">
             <Activity className="brand-icon" size={24} />
@@ -89,14 +99,14 @@ export default function Header({
               <h1 className="brand-title">MarketPulse</h1>
               <span className="live-tag">
                 <span className="live-pulse"></span>
-                INDIA
+                INDIA (NSE & BSE)
               </span>
             </div>
-            <p className="brand-subtitle">Real-Time Indian Stock Market Price Display</p>
+            <p className="brand-subtitle">Indian Stock Market Intelligence Platform</p>
           </div>
         </div>
 
-        {/* Center / Market Status Indicator */}
+        {/* Center: Live Market Hours Status & IST Clock */}
         <div className="market-status-box">
           <div className="status-indicator-row">
             <span className={`status-dot ${marketStatus.colorClass}`}></span>
@@ -109,11 +119,19 @@ export default function Header({
           </div>
         </div>
 
-        {/* Exchange Selector & Provider Badge */}
+        {/* Exchange Selector & Top Action Buttons */}
         <div className="header-actions">
           <div className="exchange-selector">
-            <span className="exchange-label">Exchange:</span>
+            <span className="exchange-label">Market:</span>
             <div className="exchange-pills">
+              <button
+                type="button"
+                className={`exchange-pill ${selectedExchange === 'ALL' ? 'active' : ''}`}
+                onClick={() => onSelectExchange('ALL')}
+                title="Combined NSE and BSE valuation view"
+              >
+                All
+              </button>
               <button
                 type="button"
                 className={`exchange-pill ${selectedExchange === 'NSE' ? 'active' : ''}`}
@@ -133,17 +151,46 @@ export default function Header({
             </div>
           </div>
 
+          {/* Quick Refresh Button */}
+          <button
+            type="button"
+            className="btn-header-refresh"
+            onClick={onRefresh}
+            disabled={refreshing}
+            title="Refresh prices"
+          >
+            <RefreshCw size={15} className={refreshing ? 'spin-icon' : ''} />
+          </button>
+
+          {/* Provider Badge */}
           <div
-            className={`provider-badge ${isKeyConfigured ? 'provider-official' : 'provider-fallback'}`}
-            title={
-              isKeyConfigured
-                ? 'Authenticated with IndianAPI'
-                : 'Using Public Live Market Feed (add key in server/.env for IndianAPI)'
-            }
+            className={`provider-badge ${
+              isKeyConfigured ? 'provider-official' : 'provider-fallback'
+            }`}
+            title="Authenticated with IndianAPI"
           >
             <ShieldCheck size={14} />
-            <span>{providerName || (isKeyConfigured ? 'IndianAPI' : 'Live Feed')}</span>
+            <span>{providerName || 'IndianAPI'}</span>
           </div>
+
+          {/* User Profile / Auth Pill */}
+          {user ? (
+            <div className="header-user-pill" title={`Logged in as ${user.name}`}>
+              <div className="user-avatar-circle">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="header-user-name">{user.name.split(' ')[0]}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn-header-auth"
+              onClick={onOpenAuth}
+            >
+              <LogIn size={14} />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

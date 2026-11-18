@@ -23,7 +23,7 @@ export default function SearchBar({
           <input
             type="text"
             className="search-input"
-            placeholder="Search by company name or symbol (e.g. Reliance, TCS, INFY)..."
+            placeholder="Search by company, symbol, or BSE code (e.g. Tata Motors, RELIANCE, 500325, 544569)..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />

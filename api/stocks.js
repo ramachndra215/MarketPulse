@@ -22,12 +22,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const rawExchange = (req.query.exchange || 'NSE').toString().toUpperCase();
+    const rawExchange = (req.query.exchange || 'ALL').toString().toUpperCase();
 
-    if (rawExchange !== 'NSE' && rawExchange !== 'BSE') {
+    if (rawExchange !== 'NSE' && rawExchange !== 'BSE' && rawExchange !== 'ALL') {
       return res.status(400).json({
         success: false,
-        error: `Invalid exchange: '${rawExchange}'. Supported exchanges are 'NSE' and 'BSE'.`,
+        error: `Invalid exchange: '${rawExchange}'. Supported exchanges are 'ALL', 'NSE', and 'BSE'.`,
       });
     }
 

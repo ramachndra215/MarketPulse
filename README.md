@@ -1,57 +1,92 @@
-# MarketPulse – Real-Time Indian Stock Market Price Display
+# MarketPulse – Real-Time Indian Stock Market Price Display & Intelligence Platform
 
-![MarketPulse Banner](https://img.shields.io/badge/MarketPulse-Indian%20Stock%20Market-0284c7?style=for-the-badge)
+![MarketPulse Banner](https://img.shields.io/badge/MarketPulse-v2.0%20Intelligence%20Platform-0284c7?style=for-the-badge)
+![NSE & BSE](https://img.shields.io/badge/Exchanges-NSE%20%7C%20BSE-green?style=for-the-badge)
 ![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green?style=for-the-badge&logo=node.js)
 ![Vite](https://img.shields.io/badge/Vite-Fast-646CFF?style=for-the-badge&logo=vite)
-![Vercel](https://img.shields.io/badge/Vercel-Serverless%20Ready-black?style=for-the-badge&logo=vercel)
+![IndianAPI](https://img.shields.io/badge/API-IndianAPI%20Official-orange?style=for-the-badge)
 
-MarketPulse is a financial technology web application designed to track and display real-time and intraday stock market prices for premier blue-chip corporations listed on India's primary exchanges:
+MarketPulse is an enterprise-grade financial technology and stock market intelligence web platform designed to track, analyze, and display real-time and intraday stock market prices for premier blue-chip corporations listed across India's primary exchanges:
 
 - **NSE** – National Stock Exchange of India
 - **BSE** – Bombay Stock Exchange
 
-The application integrates with **IndianAPI** (`https://indianapi.in`) as its primary provider with secure server-side authorization and resilient multi-source market quote fetching, providing genuine price discovery, 52-week metrics, dynamic search, multi-exchange filtering, and interactive sorting.
+The application integrates with **IndianAPI** (`https://stock.indianapi.in`) with secure server-side authorization, in-memory caching, multi-exchange support, interactive SVG multi-period price charts, fundamental financial statements, an AI Stock Intelligence engine, portfolio management, and persistent user watchlists.
 
 ---
 
-## Key Features
+## What's New in v2.0 (Phase 1–13 Implementation)
 
-1. **Dual Exchange Support (NSE & BSE)**
-   - Toggle instantly between National Stock Exchange and Bombay Stock Exchange valuations.
-   - Distinctive visual identifiers and currency formatting in Indian Rupees (₹).
+1. **Complete Diagnosis and Fix for BSE Stocks**:
+   - Resolved the issue where BSE stocks were previously returning 0 records when filtered.
+   - Discovered and integrated native IndianAPI BSE endpoints:
+     - `GET /BSE_most_active` (returns live quotes with `.BO` BSE tickers)
+     - `GET /stock?name=...` (returns dual `currentPrice.NSE` and `currentPrice.BSE`, plus BSE Scrip Codes)
+   - Created a 3-way exchange toggle: **All Exchanges**, **NSE**, and **BSE**.
+   - Dual exchange identifier support (e.g. Reliance: NSE `RELIANCE` / BSE `500325`, Tata Motors: NSE `TATAMOTORS` / BSE `500570`).
 
-2. **Genuine Live Market Data**
-   - Direct integration with **IndianAPI** (`https://stock.indianapi.in/stock`).
-   - Secure server-side credential isolation (API key never exposed to client/browser).
-   - Multi-source resilience via `Promise.allSettled`: if any single stock query encounters a provider limitation, all other successfully resolved stocks display without interruption.
-   - Built-in live public quote fallback for instant out-of-the-box local testing.
+2. **Master Stock Universe Expansion**:
+   - Expanded to 27+ premier Indian blue chips across 10 sectors (Banking, IT, Energy, FMCG, Auto, Telecom, Pharma, Infra, Metals, Conglomerate).
+   - Each stock tracks verified NSE symbol, BSE scrip code, official company name, sector, and 52-week metrics.
 
-3. **Core Indian Blue-Chip Watchlist**
-   - **Reliance Industries** (`RELIANCE`) – Energy & Oil/Gas
-   - **Tata Consultancy Services** (`TCS`) – Information Technology
-   - **Infosys** (`INFY`) – Information Technology
-   - **State Bank of India** (`SBIN`) – Financial Services
-   - **HDFC Bank** (`HDFCBANK`) – Financial Services
-   - **ICICI Bank** (`ICICIBANK`) – Financial Services
-   - **Larsen & Toubro** (`LT`) – Capital Goods / Infrastructure
-   - **ITC** (`ITC`) – FMCG
+3. **Interactive Summary Cards (5 Key Metrics)**:
+   - **Total Tracked**: Opens the full equities table modal with market breakdown.
+   - **Positive Movers**: Automatically filters the dashboard to show advancing stocks.
+   - **Negative Movers**: Automatically filters the dashboard to show declining stocks.
+   - **Loaded Records**: Opens API health, cache status, and latency diagnostics modal.
+   - **Market Breadth / Average Movement**: Opens an advance-to-decline ratio and breadth modal.
 
-4. **Dynamic FinTech Dashboard UI**
-   - **Dark Navy Executive Header** with live Indian Standard Time (IST) clock and trading session status (Market Open, Pre-Market, Market Closed, Weekend).
-   - **Summary Cards**: Real-time counts for Total Tracked, Positive Movers (Advancing), Negative Movers (Declining), Loaded Records, and Average Watchlist Movement (Breadth).
-   - **52-Week Range Bar**: Visual gauge illustrating where current trading values sit relative to 52-week lows and highs.
-   - **Search & Sector Filtering**: Instant query by symbol or company name, plus sector filtering (IT, Banking, Energy, FMCG, Infra).
-   - **Dual Display Modes**: Switch between responsive **Card Grid** and **Sortable Data Table** (sort by symbol, name, price, change, %, 52W high/low).
+4. **15-Item Functional Sidebar Navigation**:
+   - Collapsible desktop & mobile sidebar supporting:
+     1. Dashboard Overview
+     2. Market Overview (Indices + Most Active + Trending)
+     3. All Stocks (Universe)
+     4. Personal Watchlist
+     5. Top Gainers
+     6. Top Losers
+     7. Stock Analysis
+     8. AI Intelligence
+     9. Stock Comparison (Up to 4 stocks side-by-side)
+     10. News & Market Reports
+     11. Portfolio Tracker
+     12. Price Alerts
+     13. Platform Settings
+     14. User Profile
+     15. User Authentication / Logout
 
-5. **Automated & Manual Refresh Controls**
-   - 5-minute periodic auto-refresh countdown with pause/resume controls.
-   - Manual one-click refresh with visual loading animations and background cache refresh.
-   - Cache protection: retains previously loaded prices if a network disconnection occurs.
+5. **Company Details Modal & Interactive SVG Price Charts**:
+   - Multi-period historical charts (`1D`, `5D`, `1M`, `6M`, `1Y`, `3Y`, `5Y`, `MAX`).
+   - Resolves valid IndianAPI `/historical_data` periods (`1m, 6m, 1yr, 3yr, 5yr, max`).
+   - Dynamic SVG rendering with price path, gradient area fill, and high/low points.
+   - Key fundamental metrics: Market Cap, P/E Ratio, P/B Ratio, Dividend Yield, EPS, Beta, 52W High/Low.
+   - Financial statements: Annual & Quarterly P&L, Balance Sheets, and Cash Flow statements.
+   - Shareholding pattern distribution (Promoter, FII, DII, Public, Others).
 
-6. **Vercel Serverless Ready**
-   - Native `/api/stocks` serverless function configuration (`api/stocks.js` + `vercel.json`).
-   - Reusable stock normalization architecture shared between local Express server and Vercel cloud runtime.
+6. **AI Stock Intelligence Engine**:
+   - Built-in financial intelligence algorithm generating 8 structured analytical dimensions:
+     1. Executive Summary & Company Profile
+     2. Recent Price Performance & Intraday Momentum
+     3. Core Strengths & Moats
+     4. Weaknesses & Operational Headwinds
+     5. Key Risk Factors
+     6. Fundamental Valuation Indicators (P/E vs. Sector, 52W Range)
+     7. Growth Drivers & Catalysts
+     8. Plain-English Strategic Outlook (Bullish / Neutral / Bearish)
+   - AI Sector Peer Suggestions with one-click comparison.
+
+7. **Multi-Stock Comparison Matrix**:
+   - Compare up to 4 equities side-by-side across Price, Change %, 52-Week Range, Valuation, Sector, and Exchange availability.
+
+8. **User Portfolio & Watchlist Tracker**:
+   - Lightweight file-based persistent backend storage (`server/data/users.json` and `server/data/userData.json`).
+   - Secure salted PBKDF2 password hashing.
+   - Add/delete portfolio holdings with Buy Price, Quantity, Investment Value, Current Valuation, Absolute P&L, and Percentage Return.
+   - Toggle stock watchlist with instant star icon sync.
+
+9. **Live Market News & Trending Equities**:
+   - Native integration with IndianAPI `GET /news` and `GET /trending`.
+   - Displays top 10 intraday gainers, top 10 losers, and categorized market news articles.
 
 ---
 
@@ -59,10 +94,10 @@ The application integrates with **IndianAPI** (`https://indianapi.in`) as its pr
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | React 18, Vite 6, JavaScript ES6+, HTML5, CSS3 (Modern Flexbox/Grid), Axios, Lucide React Icons |
-| **Backend** | Node.js (v18+), Express.js, Axios, dotenv, CORS |
-| **API Provider** | IndianAPI (`https://stock.indianapi.in`), Live Market Feed |
-| **Deployment** | Vercel Serverless Functions, Vite Static Single-Page Application (SPA) |
+| **Frontend** | React 18, Vite 6, JavaScript ES6+, HTML5, Modern CSS3 Flexbox/Grid, Axios, Lucide React Icons |
+| **Backend** | Node.js (v18+), Express.js, Axios, dotenv, CORS, Crypto (PBKDF2) |
+| **API Provider** | IndianAPI (`https://stock.indianapi.in`) with genuine live market endpoints |
+| **Deployment** | Vercel Serverless Functions (`api/stocks.js`), Vite Single-Page Application |
 
 ---
 
@@ -72,79 +107,103 @@ The application integrates with **IndianAPI** (`https://indianapi.in`) as its pr
 stock-market-app/
 │
 ├── api/
-│   └── stocks.js           # Vercel Serverless Function handler
+│   └── stocks.js                       # Vercel Serverless Function handler
 │
 ├── server/
-│   ├── .env.example        # Environment variable template
-│   ├── .env                # Local secrets (git-ignored)
-│   ├── package.json        # Backend dependencies
-│   ├── server.js           # Local Express development server
-│   └── stockService.js     # Shared stock fetching & normalization logic
+│   ├── data/
+│   │   ├── users.json                  # Persistent registered user credentials
+│   │   └── userData.json               # Persistent user watchlists & portfolios
+│   ├── .env.example                    # Environment variable template
+│   ├── .env                            # Local secrets (git-ignored)
+│   ├── package.json                    # Backend dependencies
+│   ├── server.js                       # RESTful Express backend server
+│   ├── stockService.js                 # IndianAPI service & stock normalization
+│   └── userService.js                  # User authentication & portfolio service
 │
 ├── src/
 │   ├── components/
-│   │   ├── Header.jsx      # Dark navy header, market status, IST clock
-│   │   ├── SearchBar.jsx   # Search input, exchange toggle, sector chips
-│   │   ├── StockCard.jsx   # Stock card with 52W range gauge & metrics
-│   │   └── StockTable.jsx  # Sortable tabular view for equities
+│   │   ├── AuthModal.jsx               # Login & Register modal dialog
+│   │   ├── CompanyModal.jsx            # Deep fundamentals, SVG charts & AI analysis
+│   │   ├── Header.jsx                  # Navy header, IST clock, exchange selector
+│   │   ├── InteractiveSummaryModal.jsx # Detail modals for the 5 summary cards
+│   │   ├── MarketOverview.jsx          # Live indices, most active & trending
+│   │   ├── NewsSection.jsx             # Live financial news grid
+│   │   ├── PortfolioView.jsx           # Portfolio tracking & P&L calculator
+│   │   ├── SearchBar.jsx               # Universal search, filters & view toggle
+│   │   ├── Sidebar.jsx                 # 15-item collapsible navigation sidebar
+│   │   ├── StockCard.jsx               # Equity card with 52W gauge & dual badges
+│   │   ├── StockComparison.jsx         # Multi-stock side-by-side comparison
+│   │   └── StockTable.jsx              # 15-column sortable table with star toggle
 │   │
-│   ├── App.jsx             # Main dashboard state & orchestration
-│   ├── App.css             # FinTech component design styles
-│   ├── index.css           # Global typography & root variables
-│   └── main.jsx            # React root mount
+│   ├── App.jsx                         # Main application state orchestration
+│   ├── App.css                         # FinTech design system styles
+│   ├── index.css                       # Global CSS variables & typography
+│   └── main.jsx                        # React root entry
 │
-├── index.html              # HTML5 entry with Plus Jakarta Sans & JetBrains Mono
-├── package.json            # Frontend Vite dependencies and scripts
-├── vite.config.js          # Vite configuration with /api backend proxy
-├── vercel.json             # Vercel deployment routing specification
-├── .gitignore              # Git ignore rules for node_modules and .env
-└── README.md               # Complete setup, API, and deployment documentation
+├── index.html                          # HTML5 shell (Plus Jakarta Sans & JetBrains Mono)
+├── package.json                        # Frontend dependencies & scripts
+├── vite.config.js                      # Vite proxy configuration
+├── vercel.json                         # Vercel deployment routing
+├── .gitignore                          # Git ignore rules
+└── README.md                           # Master documentation
 ```
 
 ---
 
-## Prerequisites
+## Backend REST API Endpoints
 
-Before running the application, ensure you have:
-
-- **Node.js** (v18.0.0 or higher recommended, tested on v24)
-- **npm** (v9.0.0 or higher)
-- PowerShell (Windows) or Bash (macOS/Linux)
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/health` | Health check, API key verification, and server uptime |
+| `GET` | `/api/stocks` | Watchlist stocks with `exchange=ALL`, `NSE`, or `BSE` |
+| `GET` | `/api/stocks/most-active` | Most active stocks on `BSE` or `NSE` |
+| `GET` | `/api/stocks/trending` | Top 10 gainers and top 10 losers |
+| `GET` | `/api/stocks/details/:symbol`| Comprehensive financials, statements & ratios |
+| `GET` | `/api/stocks/history/:symbol`| Historical prices for SVG chart (`1m, 6m, 1yr, 3yr, 5yr, max`) |
+| `GET` | `/api/stocks/ai-analysis/:symbol`| 8-dimension structured AI financial analysis |
+| `GET` | `/api/stocks/ai-suggestions/:symbol`| AI sector peer recommendations |
+| `GET` | `/api/stocks/compare` | Multi-stock comparison matrix (`symbols=RELIANCE,TCS,INFY`) |
+| `GET` | `/api/news` | Real-time Indian market news articles |
+| `POST` | `/api/auth/register` | User account registration |
+| `POST` | `/api/auth/login` | User login & session token generation |
+| `GET` | `/api/user/profile` | Current user profile details |
+| `GET` | `/api/user/watchlist` | Get user's saved stock symbols |
+| `POST` | `/api/user/watchlist` | Toggle stock in user's watchlist |
+| `GET` | `/api/user/portfolio` | Get user's portfolio holdings |
+| `POST` | `/api/user/portfolio` | Add equity purchase to portfolio |
+| `DELETE`| `/api/user/portfolio/:id` | Remove holding from portfolio |
 
 ---
 
-## Step-by-Step Installation & Execution (PowerShell)
+## Running the Application Locally
 
-### Step 1: Open the Project Folder
+### Prerequisites
+- Node.js (v18.0.0 or higher)
+- npm (v9.0.0 or higher)
+- Windows PowerShell / macOS Terminal
 
+### Step 1: Open the Project Directory
 ```powershell
-cd stock-market-app
+cd "stock-market-app"
 ```
 
-### Step 2: Install Frontend Dependencies
-
+### Step 2: Install Dependencies
 ```powershell
+# Install frontend dependencies
 npm install
-```
 
-### Step 3: Install Backend Dependencies
-
-```powershell
+# Install backend dependencies
 cd server
 npm install
 cd ..
 ```
 
-### Step 4: Configure the API Key
-
-Create your local backend environment configuration:
-
+### Step 3: Configure Environment Variables
+Copy `.env.example` to `server/.env` and add your IndianAPI key:
 ```powershell
 Copy-Item server/.env.example server/.env
 ```
-
-Open `server/.env` in your text editor. It contains:
-
+Ensure `server/.env` contains:
 ```env
 PORT=5000
 API_BASE_URL=https://stock.indianapi.in
@@ -152,171 +211,59 @@ INDIAN_API_KEY=your_actual_api_key_here
 ENABLE_PUBLIC_FALLBACK=true
 ```
 
-> **API Key Setup:**
-> 1. Visit [https://indianapi.in/](https://indianapi.in/) and sign up for an API account.
-> 2. Copy your API Key from the IndianAPI developer console.
-> 3. Paste it as `INDIAN_API_KEY=your_key_here` in `server/.env`.
-> 4. If you leave `INDIAN_API_KEY` blank, MarketPulse automatically activates its genuine Live Public Market Feed so you can test and view live Indian equity prices immediately.
-
-### Step 5: Start the Backend Server (Terminal 1)
-
-Open **Terminal 1** in VS Code / PowerShell:
-
+### Step 4: Start the Backend Server (Terminal 1)
 ```powershell
-cd stock-market-app/server
-npm start
+cd server
+node server.js
 ```
+The backend starts on `http://localhost:5000`.
 
-The Express server will start on:
-
-```text
-http://localhost:5000
-```
-
-Verify the backend health at:
-- `http://localhost:5000/api/health`
-- `http://localhost:5000/api/stocks?exchange=NSE`
-
-### Step 6: Start the Frontend Application (Terminal 2)
-
-Open **Terminal 2** in VS Code / PowerShell:
-
+### Step 5: Start the Frontend Application (Terminal 2)
 ```powershell
-cd stock-market-app
 npm run dev
 ```
+The Vite development server starts on `http://localhost:5173`. Open your browser to explore the dashboard.
 
-The Vite development server will start at:
-
-```text
-http://localhost:5173
-```
-
-Vite is configured with a reverse proxy: all requests from React to `/api/*` are forwarded seamlessly to `http://localhost:5000/api/*`.
-
----
-
-## Production Build & Preview
-
-To verify the production build locally:
-
-### Step 7: Build for Production
-
+### Step 6: Verify Production Build
 ```powershell
 npm run build
 ```
-
-This compiles optimized static assets into the `dist/` directory.
-
-### Step 8: Preview the Production Build
-
-```powershell
-npm run preview
-```
+Builds optimized production assets to `dist/` with 0 errors.
 
 ---
 
-## Vercel Deployment Guide
+## Testing the BSE Integration
 
-MarketPulse is architected for zero-configuration Vercel deployment:
+To verify that BSE stocks are operating correctly:
 
-1. **Push to GitHub**:
-   Ensure you commit only tracked source code. Never commit `.env` or `server/.env` (guarded by `.gitignore`).
-   ```powershell
-   git init
-   git add .
-   git commit -m "Initial commit: MarketPulse Indian Stock Market Dashboard"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/marketpulse.git
-   git push -u origin main
-   ```
-
-2. **Import into Vercel**:
-   - Go to [vercel.com](https://vercel.com/) and click **Add New Project**.
-   - Select your GitHub repository (`marketpulse`).
-   - If the root directory is `stock-market-app`, set **Root Directory** to `stock-market-app` (or deploy from repository root).
-   - Framework Preset: **Vite**.
-   - Build Command: `npm run build`.
-   - Output Directory: `dist`.
-
-3. **Configure Environment Variables in Vercel**:
-   In Vercel **Settings → Environment Variables**, add:
-   - `INDIAN_API_KEY` = `your_actual_indianapi_key`
-   - `API_BASE_URL` = `https://stock.indianapi.in`
-   - `ENABLE_PUBLIC_FALLBACK` = `true`
-
-4. **Deploy**:
-   Click **Deploy**. Vercel will build the React SPA and deploy `api/stocks.js` as a serverless endpoint handling `/api/stocks`.
-
----
-
-## API Architecture & Response Normalization
-
-### Endpoint: `GET /api/stocks`
-
-**Query Parameters:**
-- `exchange` (optional): `NSE` (default) or `BSE`
-- `refresh` (optional): `true` to bypass cache
-
-**Normalized JSON Response Structure:**
-
-```json
-{
-  "success": true,
-  "exchange": "NSE",
-  "timestamp": "2026-11-16T15:15:00.000Z",
-  "provider": "IndianAPI (Official)",
-  "isKeyConfigured": true,
-  "total": 8,
-  "successfulCount": 8,
-  "failedCount": 0,
-  "data": [
-    {
-      "symbol": "RELIANCE",
-      "companyName": "Reliance Industries Limited",
-      "exchange": "NSE",
-      "currency": "₹",
-      "price": 1340.10,
-      "priceChange": 0.40,
-      "percentChange": 0.03,
-      "movement": "positive",
-      "yearHigh": 1611.80,
-      "yearLow": 1152.20,
-      "dayHigh": 1347.30,
-      "dayLow": 1333.80,
-      "previousClose": 1339.70,
-      "sector": "Energy & Oil/Gas",
-      "dataSource": "IndianAPI (Official)",
-      "lastUpdated": "2026-11-16T15:15:00.000Z"
-    }
-  ],
-  "errors": []
-}
-```
+1. In the top Header or Search Bar, click the **BSE** filter pill.
+2. The dashboard updates to display BSE quotes and scrip codes (`500325`, `500570`, `532540`, etc.).
+3. Open the **Market Overview** tab in the sidebar and click **BSE Most Active** to see live high-volume BSE equities like `YESB.BO`, `SUZL.BO`, `PNBK.BO`, and `RELI.BO`.
+4. Click on any stock card to open the **Company Details Modal** and view live BSE pricing alongside NSE.
 
 ---
 
 ## Security & Best Practices
 
-- **Zero Client Credential Leakage**: The IndianAPI key is stored strictly on the server (`server/.env` or Vercel serverless environment variables). No `VITE_` prefix is used, preventing browser bundling.
-- **In-Memory Cache**: 60-second server cache prevents exhausting API rate limits on rapid refreshes.
-- **Input Validation**: Validates all incoming exchange parameters (`NSE` or `BSE`) and sanitizes inputs.
-- **Resilient Batch Processing**: Utilizes `Promise.allSettled` so individual provider errors never cause complete dashboard failure.
+- **Zero Client Credential Leakage**: The `INDIAN_API_KEY` is isolated strictly in `server/.env` and is never exposed to the client or embedded in the bundle.
+- **In-Memory Cache**: 60-second caching prevents hitting IndianAPI rate limits on frequent user requests.
+- **Safe Fallback**: Resilient `Promise.allSettled` fetching ensures single-symbol failures never break the entire dashboard.
+- **Salted Password Storage**: User passwords in `server/data/users.json` are hashed using PBKDF2 with unique cryptographic salts.
 
 ---
 
-## Indian Stock Market Hours Reference
+## Indian Stock Market Trading Hours Reference
 
-| Session | Hours (Indian Standard Time - IST / UTC+5:30) |
+| Session | Hours (IST / UTC+5:30) |
 | :--- | :--- |
-| **Pre-Market Session** | 09:00 AM – 09:08 AM IST (Order entry) / 09:08 AM – 09:15 AM (Order matching) |
+| **Pre-Market Session** | 09:00 AM – 09:15 AM IST |
 | **Regular Trading Hours** | 09:15 AM – 03:30 PM IST (Monday through Friday) |
-| **Market Closed** | Evenings, Nights, Saturdays, Sundays, and NSE/BSE Official Holidays |
+| **Post-Market / Closed** | 03:30 PM onwards, Weekends, and Official NSE/BSE Holidays |
 
-The dashboard header automatically evaluates current IST time and highlights market trading session status in real time.
+The dashboard header automatically evaluates Indian Standard Time (IST) and displays market status with color-coded live indicators.
 
 ---
 
 ## Disclaimer
 
-**Educational & Informational Use Only:** MarketPulse is built for educational, analytical, and portfolio presentation purposes. Stock prices, market movements, and financial indicators displayed within this application are sourced from third-party APIs and are subject to network latency, exchange delays, or provider quotas. Do not use this software for active commercial trading or investment execution.
+**Educational & Informational Use Only:** MarketPulse is built for educational, analytical, and research purposes. Stock prices, market movements, and financial indicators displayed within this application are sourced from third-party APIs and are subject to market volatility and provider quotas. Do not use this software for active commercial trading or financial investment execution.
