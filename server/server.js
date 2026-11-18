@@ -491,10 +491,3 @@ server.on('error', (err) => {
     process.exit(1);
   }
 });
-  console.log(`   - GET /api/stocks/details/:symbol`);
-  console.log(`   - GET /api/stocks/history/:symbol?period=1m`);
-  console.log(`   - GET /api/stocks/ai-analysis/:symbol`);
-  console.log(`   - GET /api/news`);
-  console.log(`   - POST /api/auth/register, /api/auth/login`);
-  console.log(`====================================================`);
-});
